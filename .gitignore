@@ -1,0 +1,17 @@
+venv/
+.venv/
+my_env/
+.my_env/
+env/
+__pycache__/
+*.py[cod]
+
+.env
+
+.vscode/
+.idea/
+
+.docker/
+
+*.log
+.pytest_cache/
