@@ -1,4 +1,4 @@
-from sqlalchemy import String, Enum
+from sqlalchemy import String, Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
 from enum import Enum
@@ -25,7 +25,7 @@ class User(Base):
     )
     hashed_password: Mapped[str] = mapped_column(String(1024), nullable=False)
     role: Mapped[UserRole] = mapped_column(
-        Enum(UserRole),
+        SAEnum(UserRole, name='user_role'),
         default=UserRole.USER,
         nullable=False,
     )
