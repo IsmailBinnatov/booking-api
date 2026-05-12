@@ -1,0 +1,23 @@
+services:
+  auth_db:
+    image: postgres:15-alpine
+    container_name: auth_db
+    env_file:
+      - ./auth_service/.env
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth_db_data:/var/lib/postgresql/data
+  
+  auth_service:
+    build: ./auth_service
+    env_file:
+      - .env
+    ports:
+      - "8001:8000"
+    depends_on:
+      - auth_db
+
+
+volumes:
+  auth_db_data:
