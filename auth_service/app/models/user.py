@@ -1,9 +1,14 @@
 from sqlalchemy import String, Enum as SAEnum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from app.core.database import Base
+
+
+if TYPE_CHECKING:
+    from .security import RefreshToken
 
 
 class UserRole(str, Enum):
@@ -28,4 +33,11 @@ class User(Base):
         SAEnum(UserRole, name='user_role'),
         default=UserRole.USER,
         nullable=False,
+    )
+    refresh_tokens: Mapped[list['RefreshToken']] = relationship(
+        'RefreshToken',
+        back_populates='user',
+        cascade='all, delete-orphan',
+        single_parent=True,
+        passive_deletes=True,
     )
