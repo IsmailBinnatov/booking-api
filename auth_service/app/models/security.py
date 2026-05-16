@@ -25,7 +25,10 @@ class RefreshToken(Base):
         DateTime,
         server_default=func.now(),
     )
-    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False
+    )
     user_id: Mapped[int] = mapped_column(
         ForeignKey('users.id', ondelete='CASCADE'))
     user: Mapped['User'] = relationship(

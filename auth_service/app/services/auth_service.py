@@ -41,13 +41,14 @@ class AuthService:
         }
 
         access_token = create_access_token(token_data)
-        refresh_token = create_refresh_token(token_data)
+        refresh_token, expire_time = create_refresh_token(token_data)
 
         await self.token_repo.delete_by_user_id(user.id)
 
         refresh_token_obj = RefreshTokenModel(
             token=refresh_token,
             user=user,
+            expires_at=expire_time,
         )
 
         await self.token_repo.create(refresh_token_obj)
