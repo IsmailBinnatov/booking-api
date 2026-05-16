@@ -18,11 +18,12 @@ class UserRepository:
         result = await self.db.scalar(select(User).where(User.id == user_id))
         return result
 
-    async def create(self, user: User) -> User:
-        self.db.add(user)
+    async def create(self, user_data: dict) -> User:
+        new_user = User(**user_data)
+        self.db.add(new_user)
         await self.db.commit()
-        await self.db.refresh(user)
-        return user
+        await self.db.refresh(new_user)
+        return new_user
 
 
 class RefreshTokenRepository:

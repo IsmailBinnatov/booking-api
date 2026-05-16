@@ -17,13 +17,11 @@ class AuthService:
 
         hashed_pw = hash_password(user_data.password)
 
-        user = UserCreate(
-            name=user_data.name,
-            email=user_data.email,
-            password=hashed_pw,
-        )
+        user_dict = user_data.model_dump()
+        user_dict.pop('password')
+        user_dict['hashed_password'] = hashed_pw
 
-        await self.user_repo.create(user)
+        return await self.user_repo.create(user_dict)
 
     async def authenticate_user(self, login_data: UserLogin) -> User | None:
         user = await self.user_repo.get_by_email(login_data.email)
