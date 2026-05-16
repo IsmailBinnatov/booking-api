@@ -13,16 +13,16 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
-async def get_user_repo(db: AsyncSession = Depends(get_db)):
+async def get_user_repo(db: AsyncSession = Depends(get_db)) -> UserRepository:
     return UserRepository(db=db)
 
 
-async def get_token_repo(db: AsyncSession = Depends(get_db)):
+async def get_token_repo(db: AsyncSession = Depends(get_db)) -> RefreshTokenRepository:
     return RefreshTokenRepository(db=db)
 
 
 async def get_auth_service(
     user_repo: UserRepository = Depends(get_user_repo),
     token_repo: RefreshTokenRepository = Depends(get_token_repo),
-):
+) -> AuthService:
     return AuthService(user_repo=user_repo, token_repo=token_repo)
