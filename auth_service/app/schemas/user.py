@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 from app.models.user import UserRole
+from app.schemas.token import RefreshTokenSchemaResponse
 
 
 class UserCreate(BaseModel):
@@ -12,6 +13,16 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+    role: UserRole
+    refresh_tokens: list[RefreshTokenSchemaResponse]
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserRead(BaseModel):

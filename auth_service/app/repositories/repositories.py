@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 
 from sqlalchemy import select, delete
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import User, RefreshToken
@@ -9,6 +10,15 @@ from app.models import User, RefreshToken
 class UserRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    async def get_all_users(self, limit: int = 100, offset: int = 0) -> Sequence[User]:
+        result = await self.db.scalars(
+            select(User)
+            .options(selectinload(User.refresh_tokens))
+            .limit(limit)
+            .offset(offset)
+        )
+        return result.all()
 
     async def get_by_email(self, email: str) -> User | None:
         result = await self.db.scalar(select(User).where(User.email == email))

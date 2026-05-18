@@ -33,6 +33,11 @@ class AuthService:
 
         return user
 
+    async def get_all_users(self, limit: int, offset: int):
+        if limit > 100:
+            limit = 100
+        return await self.user_repo.get_all_users(limit=limit, offset=offset)
+
     async def create_token_pair(self, user: User) -> dict:
         token_data = {
             'sub': str(user.id),

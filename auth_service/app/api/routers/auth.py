@@ -1,11 +1,30 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
 
-from app.schemas.user import UserCreate, UserLogin, UserRead
+from app.schemas.user import UserCreate, UserLogin, UserRead, UserResponse
+from app.schemas.token import TokenPayload
 from app.services.auth_service import AuthService
 from app.core.dependencies import get_auth_service
+from app.core.security import RoleChecker
+from app.models.user import UserRole
 
 
 router = APIRouter(prefix='/auth', tags=['Auth Service'])
+
+
+@router.get(
+    '/all-users',
+    response_model=list[UserResponse],
+    status_code=status.HTTP_200_OK
+)
+async def get_all_users(
+    limit: int = 100,
+    offset: int = 0,
+    admin_data: TokenPayload = Depends(
+        RoleChecker([UserRole.ADMIN, UserRole.MODERATOR])),
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    users = await auth_service.get_all_users(limit=limit, offset=offset)
+    return users
 
 
 @router.post(
