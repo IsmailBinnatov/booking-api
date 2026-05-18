@@ -6,6 +6,7 @@ from app.services.auth_service import AuthService
 from app.core.dependencies import get_auth_service
 from app.core.security import RoleChecker
 from app.models.user import UserRole
+from app.core.dependencies import rate_limiter
 
 
 router = APIRouter(prefix='/auth', tags=['Auth Service'])
@@ -47,7 +48,7 @@ async def register(
     return new_user
 
 
-@router.post('/login')
+@router.post('/login', dependencies=[Depends(rate_limiter)])
 async def login(
     login_data: UserLogin,
     response: Response,

@@ -1,5 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi_limiter.depends import RateLimiter
+from pyrate_limiter import Limiter, Rate, Duration
 
 from typing import AsyncGenerator, TYPE_CHECKING
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +17,8 @@ if TYPE_CHECKING:
 
 
 security = HTTPBearer()
+
+rate_limiter = RateLimiter(limiter=Limiter(Rate(5, Duration.MINUTE)))
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
