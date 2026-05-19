@@ -1,7 +1,6 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi_limiter.depends import RateLimiter
 from pyrate_limiter import Duration, Limiter, Rate, RedisBucket
 import redis.asyncio as redis
 

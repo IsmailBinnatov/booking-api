@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import async_session_maker
 from app.repositories.repositories import UserRepository, RefreshTokenRepository
 from app.schemas.token import TokenPayload
-# from app.core.security import decode_token
 
 
 if TYPE_CHECKING:
