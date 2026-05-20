@@ -29,6 +29,20 @@ async def get_all_users(
     return users
 
 
+@router.get('/{user_id}', response_model=UserRead)
+async def get_user_internal(
+    user_id: int,
+    auth_service: AuthService = Depends(get_auth_service)
+):
+    user = await auth_service.get_user_by_id(user_id)
+    if not user:
+        logger.warning(f'Internal request: user with ID {user_id} not found')
+        raise HTTPException(status_code=404, detail="User not found")
+
+    logger.info(f'Internal request: fetched data for user_id={user_id}')
+    return user
+
+
 @router.post(
     '/register',
     response_model=UserRead,
