@@ -1,3 +1,5 @@
+from typing import Sequence
+
 from app.repositories.repositories import UserRepository, RefreshTokenRepository
 from app.core.security import hash_password, verify_password, create_access_token, create_refresh_token, decode_token
 from app.schemas.user import UserCreate, UserLogin
@@ -38,7 +40,7 @@ class AuthService:
 
         return user
 
-    async def get_all_users(self, limit: int, offset: int) -> list[User]:
+    async def get_all_users(self, limit: int, offset: int) -> Sequence[User]:
         if limit > 100:
             limit = 100
         return await self.user_repo.get_all_users(limit=limit, offset=offset)
