@@ -3,6 +3,7 @@ from app.core.security import hash_password, verify_password, create_access_toke
 from app.schemas.user import UserCreate, UserLogin
 from app.models.user import User
 from app.models.security import RefreshToken as RefreshTokenModel
+from app.core.logger import logger
 
 
 class AuthService:
@@ -13,6 +14,8 @@ class AuthService:
     async def register_user(self, user_data: UserCreate) -> User | None:
         user_exists = await self.user_repo.get_by_email(user_data.email)
         if user_exists:
+            logger.warning(
+                f'Not registered a new user, alredy exists: email={user_data.email}')
             return None
 
         hashed_pw = hash_password(user_data.password)
@@ -20,6 +23,8 @@ class AuthService:
         user_dict = user_data.model_dump()
         user_dict.pop('password')
         user_dict['hashed_password'] = hashed_pw
+
+        logger.info(f'User created: {user_data.email}')
 
         return await self.user_repo.create(user_dict)
 
@@ -39,30 +44,37 @@ class AuthService:
         return await self.user_repo.get_all_users(limit=limit, offset=offset)
 
     async def create_token_pair(self, user: User) -> dict:
-        token_data = {
-            'sub': str(user.id),
-            'email': user.email,
-            'role': user.role,
-        }
+        try:
+            token_data = {
+                'sub': str(user.id),
+                'email': user.email,
+                'role': user.role,
+            }
 
-        access_token = create_access_token(token_data)
-        refresh_token, expire_time = create_refresh_token(token_data)
+            access_token = create_access_token(token_data)
+            refresh_token, expire_time = create_refresh_token(token_data)
 
-        await self.token_repo.delete_by_user_id(user.id)
+            await self.token_repo.delete_by_user_id(user.id)
 
-        refresh_token_obj = RefreshTokenModel(
-            token=refresh_token,
-            user=user,
-            expires_at=expire_time,
-        )
+            refresh_token_obj = RefreshTokenModel(
+                token=refresh_token,
+                user=user,
+                expires_at=expire_time,
+            )
 
-        await self.token_repo.create(refresh_token_obj)
+            await self.token_repo.create(refresh_token_obj)
 
-        return {
-            'access_token': access_token,
-            'refresh_token': refresh_token,
-            'token_type': 'bearer',
-        }
+            logger.info(f'Token pair generated for user_id={user.id}')
+
+            return {
+                'access_token': access_token,
+                'refresh_token': refresh_token,
+                'token_type': 'bearer',
+            }
+        except Exception as e:
+            logger.error(
+                f'Critical error creating token pair for user_id={user.id}: {e}')
+            raise
 
     async def refresh_access_token(self, refresh_token: str) -> dict | None:
         payload = decode_token(refresh_token)

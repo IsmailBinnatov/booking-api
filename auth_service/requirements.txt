@@ -10,3 +10,4 @@ PyJWT
 passlib
 fastapi-limiter
 redis
+loguru

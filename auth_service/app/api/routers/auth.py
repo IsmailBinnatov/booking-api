@@ -7,6 +7,7 @@ from app.core.dependencies import get_auth_service
 from app.core.security import RoleChecker
 from app.models.user import UserRole
 from app.core.dependencies import rate_limiter
+from app.core.logger import logger
 
 
 router = APIRouter(prefix='/auth', tags=['Auth Service'])
@@ -40,11 +41,14 @@ async def register(
     new_user = await auth_service.register_user(user_data)
 
     if not new_user:
+        logger.warning(
+            f'Registration failed: email {user_data.email} already exists')
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='User with that email address alredy exists'
         )
 
+    logger.info(f'User successfully registered: {new_user.email}')
     return new_user
 
 
@@ -85,6 +89,7 @@ async def refresh_token_route(
     auth_service: AuthService = Depends(get_auth_service),
 ):
     if not refresh_token:
+        logger.warning('Refresh token attempt without cookie')
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='The refresh token is missing. Please log in again.',
@@ -93,11 +98,13 @@ async def refresh_token_route(
     new_tokens = await auth_service.refresh_access_token(refresh_token)
 
     if not new_tokens:
+        logger.error('Refresh token invalid or expired')
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='The refresh token is invalid or has expired. Please log in again.',
         )
 
+    logger.info('Access token refreshed successfully')
     response.set_cookie(
         key='refresh_token',
         value=new_tokens['refresh_token'],
