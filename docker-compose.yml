@@ -1,4 +1,5 @@
 services:
+  # Auth Service
   auth_db:
     image: postgres:15-alpine
     container_name: auth_db
@@ -25,6 +26,18 @@ services:
       - auth_db
       - auth_redis
 
+  # Flight Service
+  flight_db:
+    image: postgres:15-alpine
+    container_name: flight_db
+    env_file:
+      - ./flight_service/.env
+    ports:
+      - "5433:5432"
+    volumes:
+      - flight_db_data:/var/lib/postgresql/data
+
 
 volumes:
   auth_db_data:
+  flight_db_data:
