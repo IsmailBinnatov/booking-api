@@ -1,8 +1,8 @@
 """init flight and seat tables
 
-Revision ID: 0afd67638050
+Revision ID: 020a047a0f87
 Revises: 
-Create Date: 2026-05-22 22:43:28.278120
+Create Date: 2026-05-23 17:17:03.948428
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '0afd67638050'
+revision: str = '020a047a0f87'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

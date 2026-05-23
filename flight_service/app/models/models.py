@@ -35,9 +35,8 @@ class Seat(Base):
     )
     seat_number: Mapped[str] = mapped_column(String(5))
     is_booked: Mapped[bool] = mapped_column(Boolean, default=False)
-    locked_until: Mapped[datetime] = mapped_column(
+    locked_until: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
-        default=None,
     )
 
     flight: Mapped['Flight'] = relationship(
