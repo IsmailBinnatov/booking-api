@@ -25,7 +25,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title='AirSales - Auth Service',
     description='Authorization and user management microservice',
-    version='1.0.0'
+    version='1.0.0',
+    lifespan=lifespan,
 )
 
 app.include_router(auth_router)
