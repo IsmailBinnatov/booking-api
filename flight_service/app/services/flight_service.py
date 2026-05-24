@@ -29,7 +29,7 @@ class FlightService:
         if len(seats) != len(seat_ids):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail='Some seats are not found'
+                detail='Seat or seats are not found'
             )
 
         for seat in seats:
