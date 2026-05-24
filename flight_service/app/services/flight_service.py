@@ -1,23 +1,41 @@
+import json
+from typing import Any
+
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.flight_repository import FlightRepository
 from app.repositories.seat_repository import SeatRepository
-from app.schemas.flight import FlightQueryParams
+from app.schemas.flight import FlightQueryParams, FlightResponse
+from app.core.dependencies import redis_client
 
 
 class FlightService:
 
-    @staticmethod
+    @classmethod
     async def get_flights(
+        cls,
         db: AsyncSession,
         filters: FlightQueryParams,
         limit: int = 10,
         offset: int = 0,
-    ):
-        return await FlightRepository.get_all_flights(
-            db, filters, limit, offset,
+    ) -> list[dict[str, Any]]:
+
+        cache_key = f'flights:{filters.departure_from}:{filters.arrival_to}:lim_{limit}:off_{offset}'
+        cached_flights = await redis_client.get(cache_key)
+        if cached_flights:
+            print('--- [CACHE HIT] The data is taken from Redis ---')
+            return json.loads(cached_flights)
+
+        print('--- [CACHE MISS] Redis is empty. Going to PostgreSQL ---')
+        db_flights = await FlightRepository.get_all_flights(
+            db=db, filters=filters, limit=limit, offset=offset,
         )
+
+        validated_flights = [FlightResponse.model_validate(f)
+                             .model_dump(mode='json') for f in db_flights]
+        await redis_client.set(cache_key, json.dumps(validated_flights), ex=300)
+        return validated_flights
 
     @staticmethod
     async def book_seats(
