@@ -23,15 +23,3 @@ async def get_all_flights(
         offset=offset,
     )
     return flights
-
-
-@router.post('/book', response_model=list[SeatResponse])
-async def book_flight_seats(
-    body: BookSeatsRequest,
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Returns seats new status
-    """
-    updated_seats = await FlightService.book_seats(db=db, seat_ids=body.seat_ids)
-    return updated_seats

@@ -28,7 +28,3 @@ class FlightResponse(BaseModel):
     seats: list[SeatResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class BookSeatsRequest(BaseModel):
-    seat_ids: list[int] = Field(...)

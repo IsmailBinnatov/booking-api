@@ -38,31 +38,6 @@ class FlightService:
         return validated_flights
 
     @staticmethod
-    async def book_seats(
-        db: AsyncSession,
-        seat_ids: list[int],
-    ):
-        seats = await SeatRepository.get_seats_by_ids_for_update(db, seat_ids)
-
-        if len(seats) != len(seat_ids):
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail='Seat or seats are not found'
-            )
-
-        for seat in seats:
-            if seat.is_booked:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f'The seat {seat.seat_number} is already booked'
-                )
-
-            seat.is_booked = True
-
-        await SeatRepository.update_seats(db)
-        return seats
-
-    @staticmethod
     async def _clear_flights_cache() -> None:
         """
         Asynchronously finds and deletes all cache keys that begin with the prefix 'flights:'
