@@ -1,4 +1,5 @@
 import json
+from loguru import logger
 from typing import Any
 
 from fastapi import HTTPException, status
@@ -24,10 +25,10 @@ class FlightService:
         cache_key = f'flights:{filters.departure_from}:{filters.arrival_to}:lim_{limit}:off_{offset}'
         cached_flights = await redis_client.get(cache_key)
         if cached_flights:
-            print('--- [CACHE HIT] The data is taken from Redis ---')
+            logger.info('[CACHE HIT] The data is taken from Redis')
             return json.loads(cached_flights)
 
-        print('--- [CACHE MISS] Redis is empty. Going to PostgreSQL ---')
+        logger.info('[CACHE MISS] Redis is empty. Going to PostgreSQL')
         db_flights = await FlightRepository.get_all_flights(
             db=db, filters=filters, limit=limit, offset=offset,
         )
@@ -46,7 +47,7 @@ class FlightService:
             async for key in redis_client.scan_iter(match='flights:*'):
                 await redis_client.delete(key)
         except Exception as e:
-            print(f'--- [CACHE ERROR] Failed to clear cache: {e} ---')
+            logger.error(f'[CACHE ERROR] Failed to clear cache: {e}')
 
     @staticmethod
     async def lock_seat_for_booking(
