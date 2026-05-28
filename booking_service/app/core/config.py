@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     DB_NAME: str
     DB_PORT: int
 
+    # Flight Service
+    FLIGHT_SERVICE_URL: str
+
     model_config = SettingsConfigDict(env_file='.env', extra='ignore')
 
     @property
