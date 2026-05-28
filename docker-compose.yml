@@ -45,8 +45,20 @@ services:
     volumes:
       - flight_redis_data:/data
 
+  # Booking Service
+  booking_db:
+    image: postgres:15-alpine
+    container_name: booking_db
+    env_file:
+      - ./booking_service/.env
+    ports:
+      - "5434:5432"
+    volumes:
+      - booking_db_data:/var/lib/postgresql/data
+
 
 volumes:
   auth_db_data:
   flight_db_data:
   flight_redis_data:
+  booking_db_data:
