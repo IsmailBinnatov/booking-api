@@ -7,6 +7,9 @@ my_env/
 flight_env/
 .flight_env/
 
+booking_env/
+.booking_env/
+
 env/
 __pycache__/
 *.py[cod]
