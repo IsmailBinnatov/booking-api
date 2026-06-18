@@ -4,6 +4,9 @@ venv/
 my_env/
 .my_env/
 
+auth_env/
+.auth_env/
+
 flight_env/
 .flight_env/
 
@@ -23,3 +26,5 @@ __pycache__/
 
 *.log
 .pytest_cache/
+
+.python-version
