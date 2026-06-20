@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schemas.flight import FlightQueryParams, FlightResponse, SeatResponse, BookSeatsRequest
+from app.schemas.flight import FlightQueryParams, FlightResponse
 from app.services.flight_service import FlightService
 from app.core.dependencies import get_db
 

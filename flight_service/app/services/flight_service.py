@@ -50,55 +50,55 @@ class FlightService:
             logger.error(f'[CACHE ERROR] Failed to clear cache: {e}')
 
     @staticmethod
-    async def lock_seat_for_booking(
+    async def lock_seats_for_booking(
         db: AsyncSession,
         flight_id: int,
-        seat_number: str,
+        seat_numbers: list[str],
     ) -> dict[str, str]:
 
-        updated_rows = await SeatRepository.lock_seat(
+        updated_rows = await SeatRepository.lock_seats(
             db=db,
             flight_id=flight_id,
-            seat_number=seat_number,
+            seat_numbers=seat_numbers,
         )
 
-        if updated_rows == 0:
+        if updated_rows != len(seat_numbers):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f'Seat {seat_number} on flight {flight_id} has already been booked or reserved by another user',
+                detail=f'Seats: {", ".join(seat_numbers)} on flight \'{flight_id}\' has already been booked or reserved by another user',
             )
 
         await FlightService._clear_flights_cache()
 
         return {
             'status': 'success',
-            'message': f'Seat {seat_number} has been successfully reserved for 10 minutes',
+            'message': f'Seat {", ".join(seat_numbers)} has been successfully reserved for 10 minutes',
         }
 
     @staticmethod
-    async def confirm_seat_booking(
+    async def confirm_seats_booking(
         db: AsyncSession,
         flight_id: int,
-        seat_number: str,
+        seat_numbers: list[str],
     ) -> dict[str, str]:
         """
-        Business logic for confirming seat reservation after successful payment.
+        Business logic for confirming seats reservation after successful payment.
         """
-        updated_rows = await SeatRepository.confirm_booking_seat(
+        updated_rows = await SeatRepository.confirm_booking_seats(
             db=db,
             flight_id=flight_id,
-            seat_number=seat_number,
+            seat_numbers=seat_numbers,
         )
 
-        if updated_rows == 0:
+        if updated_rows != len(seat_numbers):
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f'Seat {seat_number} on flight \'{flight_id}\' not found in the system or already reserved',
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f'Some seats on flight \'{flight_id}\' are unavailable',
             )
 
         await FlightService._clear_flights_cache()
 
         return {
             'status': 'success',
-            'message': f'Seat {seat_number} on flight {flight_id} has been successfully booked permanently',
+            'message': f'Seats: {", ".join(seat_numbers)} on flight \'{flight_id}\' has been successfully booked permanently',
         }
