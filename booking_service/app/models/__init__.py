@@ -1,1 +1,1 @@
-from .models import Booking, BookingStatus
+from .models import Booking, BookingStatus, BookingSeat
