@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from app.core import dependencies
 from app.core.config import settings
+from app.api.routers.v1.booking_routers import router as booking_router
 
 
 @asynccontextmanager
@@ -26,6 +27,9 @@ app = FastAPI(
 )
 
 
+app.include_router(booking_router, prefix='/api/v1')
+
+
 @app.get('/')
 async def root():
-    return {'message: Booking Service is ready to communicate!'}
+    return {'message': 'Booking Service is ready to communicate!'}

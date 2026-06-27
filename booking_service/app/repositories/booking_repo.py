@@ -30,17 +30,18 @@ class BookingRepository:
         )
 
         self.db.add(booking)
-        await self.flush()
         return booking
 
-    async def get_booking_by_id(
+    async def get_current_user_booking_by_id(
         self,
+        user_id: int,
         booking_id: int,
     ) -> Booking | None:
 
         query = (
             select(Booking)
             .where(Booking.id == booking_id)
+            .where(Booking.user_id == user_id)
             .options(selectinload(Booking.booking_seats))
         )
 
