@@ -22,15 +22,16 @@ class BookingService:
         seat_numbers: list[str],
     ) -> Booking:
 
+        await self.flight_service_lock_seats(
+            flight_id=flight_id,
+            seat_numbers=seat_numbers,
+        )
+
         booking = await self.booking_repo.create_booking(
             user_id=user_id,
             flight_id=flight_id,
             seat_numbers=seat_numbers,
         )
-
-        await self.booking_repo.flush()
-
-        # TODO: /unlock
 
         return booking
 
@@ -107,6 +108,12 @@ class BookingService:
             raise HTTPException(
                 status_code=404,
                 detail=f'you have not booking ID: {booking_id}'
+            )
+
+        if booking.status != BookingStatus.PENDING:
+            raise HTTPException(
+                status_code=403,
+                detail='The booking already paid or cancelled'
             )
 
         seat_numbers = [

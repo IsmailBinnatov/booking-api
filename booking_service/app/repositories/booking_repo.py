@@ -30,6 +30,7 @@ class BookingRepository:
         )
 
         self.db.add(booking)
+        await self.db.flush()
         return booking
 
     async def get_current_user_booking_by_id(

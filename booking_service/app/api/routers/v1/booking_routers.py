@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 
-from app.schemas.schemas import BookingCreate
+from app.schemas.schemas import BookingCreate, BookingResponse
 from app.schemas.token import TokenPayload
 from app.core.dependencies import get_booking_service
 from app.core.auth.auth_dependencies import get_current_token_payload
@@ -22,11 +22,6 @@ async def create_booking(
     payload: TokenPayload = Depends(get_current_token_payload),
     booking_service: BookingService = Depends(get_booking_service),
 ) -> dict[str, str]:
-
-    await booking_service.flight_service_lock_seats(
-        flight_id=flight_data.flight_id,
-        seat_numbers=flight_data.seat_numbers,
-    )
 
     booking = await booking_service.create_booking(
         user_id=payload.user_id,
@@ -57,3 +52,28 @@ async def pay_and_confirm_booking(
     return {
         'message': f'Booking ID: {booking_id} successfully paid'
     }
+
+
+@router.get(
+    '/{booking_id}',
+    response_model=BookingResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def get_booking_by_id(
+    booking_id: int,
+    payload: TokenPayload = Depends(get_current_token_payload),
+    booking_service: BookingService = Depends(get_booking_service),
+) -> BookingResponse:
+
+    booking = await booking_service.get_booking_by_id(
+        user_id=payload.user_id,
+        booking_id=booking_id,
+    )
+
+    if not booking:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Booking not found',
+        )
+
+    return booking
