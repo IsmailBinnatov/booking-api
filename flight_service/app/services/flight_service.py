@@ -13,15 +13,16 @@ from app.core.dependencies import redis_client
 
 class FlightService:
 
-    @classmethod
+    @staticmethod
     async def get_flights(
-        cls,
         db: AsyncSession,
         filters: FlightQueryParams,
         limit: int = 10,
         offset: int = 0,
     ) -> list[dict[str, Any]]:
-
+        """
+        Return cached flights if exists, else return flights from db
+        """
         cache_key = f'flights:{filters.departure_from}:{filters.arrival_to}:lim_{limit}:off_{offset}'
         cached_flights = await redis_client.get(cache_key)
         if cached_flights:
@@ -30,7 +31,10 @@ class FlightService:
 
         logger.info('[CACHE MISS] Redis is empty. Going to PostgreSQL')
         db_flights = await FlightRepository.get_all_flights(
-            db=db, filters=filters, limit=limit, offset=offset,
+            db=db,
+            filters=filters,
+            limit=limit,
+            offset=offset,
         )
 
         validated_flights = [FlightResponse.model_validate(f)
@@ -82,9 +86,9 @@ class FlightService:
         seat_numbers: list[str],
     ) -> dict[str, str]:
         """
-        Business logic for confirming seats reservation after successful payment.
+        Business logic for confirming seats reservation after successful payment
         """
-        updated_rows = await SeatRepository.confirm_booking_seats(
+        updated_rows = await SeatRepository.book_seats(
             db=db,
             flight_id=flight_id,
             seat_numbers=seat_numbers,
@@ -101,4 +105,35 @@ class FlightService:
         return {
             'status': 'success',
             'message': f'Seats: {", ".join(seat_numbers)} on flight \'{flight_id}\' has been successfully booked permanently',
+        }
+
+    @staticmethod
+    async def unlock_locked_seats(
+        db: AsyncSession,
+        flight_id: int,
+        seat_numbers: list[str],
+    ) -> dict[str, str]:
+        """
+        Unlcoks given seats.
+        """
+        updated_rows = await SeatRepository.unlock_seats(
+            db=db,
+            flight_id=flight_id,
+            seat_numbers=seat_numbers,
+        )
+
+        if updated_rows != len(seat_numbers):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    f'Some seats on flight \'{flight_id}\' could not be unlocked. '
+                    'They may be permanently booked or not exist.'
+                ),
+            )
+
+        await FlightService._clear_flights_cache()
+
+        return {
+            'status': 'success',
+            'message': f'Seats: {", ".join(seat_numbers)} on flight \'{flight_id}\' have been successfully unlocked',
         }
