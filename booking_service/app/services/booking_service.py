@@ -107,7 +107,7 @@ class BookingService:
         if not booking:
             raise HTTPException(
                 status_code=404,
-                detail=f'you have not booking ID: {booking_id}'
+                detail=f'You have not booking ID: {booking_id}'
             )
 
         if booking.status != BookingStatus.PENDING:
