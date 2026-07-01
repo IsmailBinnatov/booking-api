@@ -151,3 +151,64 @@ class BookingService:
                 status_code=503,
                 detail='Flight Service is currently unavailable',
             )
+
+    async def flight_service_cancel_booking(
+        self,
+        user_id: int,
+        booking_id: int,
+    ) -> None:
+
+        booking = await self.booking_repo.get_current_user_booking_by_id(
+            user_id=user_id,
+            booking_id=booking_id,
+        )
+
+        if not booking:
+            raise HTTPException(
+                status_code=404,
+                detail=f'You have not booking ID: {booking_id}'
+            )
+
+        if booking.status == BookingStatus.PAID:
+            raise HTTPException(
+                status_code=409,
+                detail='Paid booking cannot be cancelled',
+            )
+        elif booking.status == BookingStatus.CANCELLED:
+            return
+
+        seat_numbers = [
+            seat.seat_number
+            for seat in booking.booking_seats
+        ]
+
+        try:
+            response = await self.flight_client.post(
+                f'/api/v1/internal/flights/{booking.flight_id}/seats/unlock',
+                json={
+                    'seat_numbers': seat_numbers,
+                },
+            )
+            response.raise_for_status()
+
+            await self.booking_repo.update_booking_status(
+                booking_id=booking.id,
+                new_status=BookingStatus.CANCELLED,
+            )
+
+        except httpx.HTTPStatusError as exc:
+            error_data = exc.response.json()
+
+            raise HTTPException(
+                status_code=exc.response.status_code,
+                detail=error_data.get(
+                    'detail',
+                    'Flight Service could not unlock the locked seats',
+                )
+            )
+
+        except httpx.RequestError:
+            raise HTTPException(
+                status_code=503,
+                detail='Flight Service is currently unavailable',
+            )

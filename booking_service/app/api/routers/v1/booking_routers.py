@@ -54,6 +54,26 @@ async def pay_and_confirm_booking(
     }
 
 
+@router.post(
+    '/{booking_id}/cancel',
+    status_code=status.HTTP_200_OK,
+)
+async def cancel_booking(
+    booking_id: int,
+    payload: TokenPayload = Depends(get_current_token_payload),
+    booking_service: BookingService = Depends(get_booking_service),
+) -> dict[str, str]:
+
+    await booking_service.flight_service_cancel_booking(
+        user_id=payload.user_id,
+        booking_id=booking_id,
+    )
+
+    return {
+        'message': f'Booking ID: {booking_id} successfully cancelled'
+    }
+
+
 @router.get(
     '/{booking_id}',
     response_model=BookingResponse,
