@@ -41,6 +41,7 @@ class BookingService:
                 seat_numbers=seat_numbers,
                 url_action='unlock'
             )
+            raise
 
     async def get_booking_by_id(
         self,
