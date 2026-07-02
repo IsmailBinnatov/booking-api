@@ -33,14 +33,14 @@ class BookingService:
                 flight_id=flight_id,
                 seat_numbers=seat_numbers,
             )
+
+            return booking
         except Exception:
             await self.flight_service_seats_request(
                 flight_id=flight_id,
                 seat_numbers=seat_numbers,
                 url_action='unlock'
             )
-
-        return booking
 
     async def get_booking_by_id(
         self,
@@ -90,7 +90,7 @@ class BookingService:
                 status_code=exc.response.status_code,
                 detail=error_data.get(
                     'detail',
-                    'Flight Service could not lock the requested seats',
+                    'Flight Service could not process seats request',
                 ),
             )
 
