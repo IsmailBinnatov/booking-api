@@ -49,6 +49,20 @@ class BookingRepository:
         booking = (await self.db.execute(query)).scalar_one_or_none()
         return booking
 
+    async def get_booking_by_id(
+        self,
+        booking_id: int,
+    ) -> Booking | None:
+
+        query = (
+            select(Booking)
+            .where(Booking.id == booking_id)
+            .options(selectinload(Booking.booking_seats))
+        )
+
+        booking = (await self.db.execute(query)).scalar_one_or_none()
+        return booking
+
     async def update_booking_status(
         self,
         booking_id: int,

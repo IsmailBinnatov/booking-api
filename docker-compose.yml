@@ -19,9 +19,10 @@ services:
   auth_service:
     build: ./auth_service
     env_file:
-      - .env
+      - ./auth_service/.env
     ports:
       - "8001:8000"
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     depends_on:
       - auth_db
       - auth_redis
@@ -45,6 +46,17 @@ services:
     volumes:
       - flight_redis_data:/data
 
+  flight_service:
+    build: ./flight_service
+    env_file:
+      - ./flight_service/.env
+    ports:
+      - "8002:8000"
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    depends_on:
+      - flight_db
+      - flight_redis
+
   # Booking Service
   booking_db:
     image: postgres:15-alpine
@@ -55,6 +67,33 @@ services:
       - "5434:5432"
     volumes:
       - booking_db_data:/var/lib/postgresql/data
+
+  booking_redis_broker:
+    image: redis:7-alpine
+    container_name: booking_redis_broker
+    ports:
+      - "6381:6379"
+
+  booking_service:
+    build: ./booking_service
+    env_file:
+      - ./booking_service/.env
+    ports:
+      - "8003:8000"
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    depends_on:
+      - booking_db
+      - booking_redis_broker
+
+  booking_worker:
+    build: ./booking_service
+    env_file:
+      - ./booking_service/.env
+    command: celery -A app.core.celery_app.celery_app worker --loglevel=info
+    depends_on:
+      - booking_db
+      - booking_redis_broker
+      - flight_service
 
 
 volumes:

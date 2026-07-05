@@ -16,11 +16,19 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str
 
+    # Redis
+    REDIS_HOST: str
+    REDIS_PORT: int
+
     model_config = SettingsConfigDict(env_file='.env', extra='ignore')
 
     @property
     def database_url(self) -> str:
         return f'postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}'
+
+    @property
+    def redis_broker_url(self):
+        return f'redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0'
 
 
 settings = Settings()

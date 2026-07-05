@@ -15,12 +15,21 @@ class BookingService:
         self.booking_repo = booking_repo
         self.flight_client = flight_client
 
+    def _get_seat_numbers(
+        self,
+        booking: Booking,
+    ) -> list[str]:
+
+        return [seat.seat_number for seat in booking.booking_seats]
+
     async def create_booking(
         self,
         user_id: int,
         flight_id: int,
         seat_numbers: list[str],
     ) -> Booking:
+
+        from app.tasks.booking_tasks import cancel_pending_booking
 
         await self.flight_service_lock_seats(
             flight_id=flight_id,
@@ -32,6 +41,11 @@ class BookingService:
                 user_id=user_id,
                 flight_id=flight_id,
                 seat_numbers=seat_numbers,
+            )
+
+            cancel_pending_booking.apply_async(
+                args=[booking.id],
+                countdown=605,
             )
 
             return booking
@@ -137,14 +151,9 @@ class BookingService:
                 detail='The booking already paid or cancelled'
             )
 
-        seat_numbers = [
-            seat.seat_number
-            for seat in booking.booking_seats
-        ]
-
         await self.flight_service_seats_request(
             flight_id=booking.flight_id,
-            seat_numbers=seat_numbers,
+            seat_numbers=self._get_seat_numbers(booking),
             url_action='book',
         )
 
@@ -178,18 +187,34 @@ class BookingService:
         elif booking.status == BookingStatus.CANCELLED:
             return
 
-        seat_numbers = [
-            seat.seat_number
-            for seat in booking.booking_seats
-        ]
-
         await self.flight_service_seats_request(
             flight_id=booking.flight_id,
-            seat_numbers=seat_numbers,
+            seat_numbers=self._get_seat_numbers(booking),
             url_action='unlock',
         )
 
         await self.booking_repo.update_booking_status(
+            booking_id=booking.id,
+            new_status=BookingStatus.CANCELLED,
+        )
+
+    async def cancel_if_pending(
+        self,
+        booking_id: int,
+    ) -> None:
+
+        booking = await self.booking_repo.get_booking_by_id(booking_id)
+
+        if not booking or booking.status != BookingStatus.PENDING:
+            return None
+
+        await self.flight_service_seats_request(
+            flight_id=booking.flight_id,
+            seat_numbers=self._get_seat_numbers(booking),
+            url_action='unlock',
+        )
+
+        await self.update_booking_status(
             booking_id=booking.id,
             new_status=BookingStatus.CANCELLED,
         )
