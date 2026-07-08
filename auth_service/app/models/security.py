@@ -30,7 +30,9 @@ class RefreshToken(Base):
         nullable=False
     )
     user_id: Mapped[int] = mapped_column(
-        ForeignKey('users.id', ondelete='CASCADE'))
+        ForeignKey('users.id', ondelete='CASCADE'),
+        index=True,
+    )
     user: Mapped['User'] = relationship(
         'User',
         back_populates='refresh_tokens',
