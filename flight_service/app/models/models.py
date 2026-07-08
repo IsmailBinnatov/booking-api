@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Numeric, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -9,6 +9,13 @@ from app.core.database import Base
 
 class Flight(Base):
     __tablename__ = 'flights'
+    __table_args__ = (
+        Index(
+            'ix_flights_departure_arrival',
+            'departure_from',
+            'arrival_to',
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     flight_number: Mapped[str] = mapped_column(String(10), index=True)
@@ -27,14 +34,23 @@ class Flight(Base):
 
 class Seat(Base):
     __tablename__ = 'seats'
+    __table_args__ = (
+        UniqueConstraint(
+            'flight_id',
+            'seat_number',
+            name='uq_flight_id_seat_number',
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     flight_id: Mapped[int] = mapped_column(
         ForeignKey('flights.id', ondelete='CASCADE'),
-        index=True,
     )
     seat_number: Mapped[str] = mapped_column(String(5))
-    is_booked: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_booked: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+    )
     locked_until: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
     )

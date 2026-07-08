@@ -14,7 +14,10 @@ class Settings(BaseSettings):
     REDIS_PORT: int
     REDIS_DB: int
 
-    model_config = SettingsConfigDict(env_file='.env', extra='ignore')
+    model_config = SettingsConfigDict(
+        env_file=('.env', '.env.local'),
+        extra='ignore',
+    )
 
     @property
     def database_url(self) -> str:
