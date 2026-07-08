@@ -25,7 +25,10 @@ class Booking(Base):
     __tablename__ = 'bookings'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(Integer)
+    user_id: Mapped[int] = mapped_column(
+        Integer,
+        index=True,
+    )
     flight_id: Mapped[int] = mapped_column(Integer)
     status: Mapped[BookingStatus] = mapped_column(
         Enum(BookingStatus),
