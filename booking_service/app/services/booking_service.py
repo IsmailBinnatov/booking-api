@@ -1,9 +1,16 @@
 import httpx
 
-from fastapi import HTTPException
-
 from app.repositories.booking_repo import BookingRepository
 from app.models.models import Booking, BookingStatus
+from app.exceptions.booking import (
+    BookingNotFoundError,
+    BookingCannotBePaidError,
+    PaidBookingCannotBeCancelledError,
+)
+from app.exceptions.integrations import (
+    FlightServiceUnavailableError,
+    FlightServiceOperationError,
+)
 
 
 class BookingService:
@@ -101,8 +108,8 @@ class BookingService:
         except httpx.HTTPStatusError as exc:
             error_data = exc.response.json()
 
-            raise HTTPException(
-                status_code=exc.response.status_code,
+            raise FlightServiceOperationError(
+                url_action,
                 detail=error_data.get(
                     'detail',
                     'Flight Service could not process seats request',
@@ -110,10 +117,7 @@ class BookingService:
             )
 
         except httpx.RequestError:
-            raise HTTPException(
-                status_code=503,
-                detail='Flight Service is currently unavailable',
-            )
+            raise FlightServiceUnavailableError()
 
     async def flight_service_lock_seats(
         self,
@@ -138,17 +142,13 @@ class BookingService:
             booking_id=booking_id,
         )
 
-        # temporary
         if not booking:
-            raise HTTPException(
-                status_code=404,
-                detail=f'You have not booking ID: {booking_id}'
-            )
+            raise BookingNotFoundError(booking_id)
 
         if booking.status != BookingStatus.PENDING:
-            raise HTTPException(
-                status_code=403,
-                detail='The booking already paid or cancelled'
+            raise BookingCannotBePaidError(
+                booking.id,
+                booking.status,
             )
 
         await self.flight_service_seats_request(
@@ -174,16 +174,10 @@ class BookingService:
         )
 
         if not booking:
-            raise HTTPException(
-                status_code=404,
-                detail=f'You have not booking ID: {booking_id}'
-            )
+            raise BookingNotFoundError(booking_id)
 
         if booking.status == BookingStatus.PAID:
-            raise HTTPException(
-                status_code=409,
-                detail='Paid booking cannot be cancelled',
-            )
+            raise PaidBookingCannotBeCancelledError(booking_id)
         elif booking.status == BookingStatus.CANCELLED:
             return
 

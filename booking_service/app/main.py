@@ -6,6 +6,9 @@ from app.core import dependencies
 from app.core.config import settings
 from app.api.routers.v1.booking_routers import router as booking_router
 
+from app.api.exception_handlers import app_error_handler
+from app.exceptions.base import AppError
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -28,6 +31,10 @@ app = FastAPI(
 
 
 app.include_router(booking_router, prefix='/api/v1')
+app.add_exception_handler(
+    AppError,
+    app_error_handler,
+)
 
 
 @app.get('/')
