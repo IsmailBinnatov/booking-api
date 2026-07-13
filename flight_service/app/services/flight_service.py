@@ -2,13 +2,17 @@ import json
 from loguru import logger
 from typing import Any
 
-from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.flight_repository import FlightRepository
 from app.repositories.seat_repository import SeatRepository
 from app.schemas.flight import FlightQueryParams, FlightResponse
 from app.core.dependencies import redis_client
+from app.exceptions.flight import (
+    SeatsUnavailableError,
+    SeatsCannotBeBookedError,
+    SeatsCannotBeUnlockedError,
+)
 
 
 class FlightService:
@@ -67,10 +71,7 @@ class FlightService:
         )
 
         if updated_rows != len(seat_numbers):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f'Seats: {", ".join(seat_numbers)} on flight \'{flight_id}\' has already been booked or reserved by another user',
-            )
+            raise SeatsCannotBeBookedError(flight_id)
 
         await FlightService._clear_flights_cache()
 
@@ -95,10 +96,7 @@ class FlightService:
         )
 
         if updated_rows != len(seat_numbers):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f'Some seats on flight \'{flight_id}\' are unavailable',
-            )
+            raise SeatsUnavailableError(flight_id)
 
         await FlightService._clear_flights_cache()
 
@@ -123,13 +121,7 @@ class FlightService:
         )
 
         if updated_rows != len(seat_numbers):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=(
-                    f'Some seats on flight \'{flight_id}\' could not be unlocked. '
-                    'They may be permanently booked or not exist.'
-                ),
-            )
+            raise SeatsCannotBeUnlockedError(flight_id)
 
         await FlightService._clear_flights_cache()
 
